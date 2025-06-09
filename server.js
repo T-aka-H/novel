@@ -45,104 +45,100 @@ app.use((req, res, next) => {
     next();
 });
 
-// 利用可能なGeminiモデルを順番に試す
-async function tryGeminiModels(prompt) {
-    const models = [
-        'gemini-1.5-flash',
-        'gemini-1.5-pro',
-        'gemini-2.0-flash-exp',
-        'gemini-pro'
-    ];
+// Gemini API呼び出し関数（gemini-1.5-flash専用）
+async function callGeminiAPI(prompt) {
+    console.log('🤖 Gemini 1.5 Flash API呼び出し開始...');
     
-    for (const model of models) {
-        try {
-            console.log(`🔄 ${model} を試行中...`);
-            const result = await callGeminiAPIWithModel(prompt, model);
-            console.log(`✅ ${model} で成功!`);
-            return result;
-        } catch (error) {
-            console.log(`❌ ${model} 失敗: ${error.message}`);
-            continue;
+    try {
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            throw new Error('GEMINI_API_KEY が設定されていません');
         }
-    }
-    
-    throw new Error('すべてのGeminiモデルで失敗しました');
-}
-
-// 特定モデルでAPI呼び出し
-async function callGeminiAPIWithModel(prompt, modelName) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-    
-    const requestBody = {
-        contents: [{ 
-            parts: [{ text: prompt }] 
-        }],
-        generationConfig: {
-            temperature: 0.8,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 2048,
-        },
-        safetySettings: [
-            {
-                category: "HARM_CATEGORY_HARASSMENT",
-                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        
+        // gemini-1.5-flash 専用URL
+        const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+        
+        const requestBody = {
+            contents: [{ 
+                parts: [{ text: prompt }] 
+            }],
+            generationConfig: {
+                temperature: 0.8,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 2048,
             },
-            {
-                category: "HARM_CATEGORY_HATE_SPEECH",
-                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            safetySettings: [
+                {
+                    category: "HARM_CATEGORY_HARASSMENT",
+                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                    category: "HARM_CATEGORY_HATE_SPEECH",
+                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                    category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                    category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                }
+            ]
+        };
+        
+        console.log('📡 Gemini 1.5 Flash にリクエスト送信中...');
+        
+        const response = await fetch(`${apiUrl}?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'User-Agent': 'MuraGeminiHaruki/1.0'
             },
-            {
-                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            body: JSON.stringify(requestBody)
+        });
+        
+        console.log('📨 API応答ステータス:', response.status);
+        
+        if (!response.ok) {
+            let errorMessage = `HTTP ${response.status}`;
+            try {
+                const errorData = await response.json();
+                console.error('❌ Gemini API エラー:', errorData);
+                if (errorData.error) {
+                    errorMessage = errorData.error.message || errorMessage;
+                }
+            } catch (e) {
+                console.error('❌ エラーレスポンスのパース失敗');
             }
-        ]
-    };
-    
-    const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json',
-            'User-Agent': 'MuraGeminiHaruki/1.0'
-        },
-        body: JSON.stringify(requestBody)
-    });
-    
-    if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}`;
-        try {
-            const errorData = await response.json();
-            if (errorData.error) {
-                errorMessage = errorData.error.message || errorMessage;
-            }
-        } catch (e) {
-            // エラーパース失敗は無視
+            throw new Error(errorMessage);
         }
-        throw new Error(errorMessage);
+        
+        const data = await response.json();
+        console.log('✅ Gemini 1.5 Flash 応答受信成功');
+        
+        if (!data.candidates || data.candidates.length === 0) {
+            throw new Error('AI応答が生成されませんでした');
+        }
+        
+        const candidate = data.candidates[0];
+        if (!candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
+            throw new Error('AI応答のコンテンツが空です');
+        }
+        
+        const generatedText = candidate.content.parts[0].text;
+        if (!generatedText) {
+            throw new Error('生成されたテキストが空です');
+        }
+        
+        console.log('✅ テキスト生成成功 - 文字数:', generatedText.length);
+        return generatedText.trim();
+        
+    } catch (error) {
+        console.error('❌ Gemini 1.5 Flash API エラー:', error);
+        throw error;
     }
-    
-    const data = await response.json();
-    
-    if (!data.candidates || data.candidates.length === 0) {
-        throw new Error('AI応答が生成されませんでした');
-    }
-    
-    const candidate = data.candidates[0];
-    if (!candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
-        throw new Error('AI応答のコンテンツが空です');
-    }
-    
-    const generatedText = candidate.content.parts[0].text;
-    if (!generatedText) {
-        throw new Error('生成されたテキストが空です');
-    }
-    
-    return generatedText.trim();
 }
 
 // プロローグ生成API
@@ -199,7 +195,7 @@ app.post('/api/generate-prolog', async (req, res) => {
 - 現代的で自然な日本語を使用
 - 村上春樹の代表作のような雰囲気を意識する`;
 
-        const prolog = await tryGeminiModels(prompt);
+        const prolog = await callGeminiAPI(prompt);
         
         console.log('✅ プロローグ生成成功');
         res.json({ prolog });
@@ -279,7 +275,7 @@ ${feedback ? `- ユーザーからの要望: ${feedback}` : ''}
 - 村上春樹の代表作品の雰囲気を意識する
 - 読者が深い余韻と満足感を得られる作品にする`;
 
-        const story = await tryGeminiModels(prompt);
+        const story = await callGeminiAPI(prompt);
         
         console.log('✅ 完成版小説生成成功');
         res.json({ story });
