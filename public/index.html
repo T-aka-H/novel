@@ -202,7 +202,7 @@
         .story-page {
             writing-mode: vertical-rl;
             text-orientation: upright;
-            padding: 40px;
+            padding: 20px; /* 上下のパディングを削減 */
             line-height: 2.4;
             font-size: 18px;
             height: 100%;
@@ -212,6 +212,8 @@
             color: #2a2a2a;
             font-weight: 400;
             border-right: 2px solid #e0e0e0; /* 右側にボーダー */
+            display: flex;
+            align-items: flex-start; /* 上詰めで配置 */
         }
 
         .story-page:last-child {
@@ -226,7 +228,7 @@
             flex-direction: row; /* 横方向に配置 */
             background: linear-gradient(145deg, #faf8f0 0%, #f5f2e8 100%);
             border-radius: 15px;
-            padding: 0; /* パディングを削除 */
+            padding: 10px 0; /* 上下のパディングを最小限に */
             direction: rtl; /* 右から左へのスクロール */
         }
 
@@ -331,17 +333,20 @@
             .header p { font-size: 1rem; }
             .story-page { 
                 font-size: 16px; 
-                padding: 20px; 
+                padding: 15px 15px 5px 15px; /* 下のパディングを大幅削減 */
                 line-height: 2.2; 
-                min-width: 350px; /* モバイルでの最小幅を調整 */
+                min-width: 350px;
+                height: auto; /* 高さを自動調整 */
+                min-height: 100%; /* 最小高さは保持 */
             }
             .book-container, .book-container.novel { 
-                height: 500px; 
-                margin-bottom: 10px; /* モバイルでも余白削減 */
+                height: 450px; /* 高さを少し削減 */
+                margin-bottom: 10px;
             }
             .character-inputs { grid-template-columns: 1fr; }
             .story-container { 
-                height: 400px;
+                height: 400px; /* コンテナ高さも削減 */
+                padding: 5px 0 2px 0; /* 下のパディングをさらに削減 */
             }
             .reset-section {
                 margin-top: 10px;
