@@ -1,0 +1,580 @@
+const indexHTML = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI小説ジェネレーター</title>
+    <meta name="description" content="AIが生成する縦書き小説ジェネレーター">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', 'HiraMinProN-W3', 'MS P明朝', serif;
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #F4A460 100%);
+            min-height: 100vh;
+            color: #2F1B14;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #FFF8DC;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(139, 69, 19, 0.5);
+        }
+
+        .card {
+            background: linear-gradient(145deg, #FFF8DC 0%, #FFFACD 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(139, 69, 19, 0.3);
+            border: 1px solid rgba(210, 105, 30, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #8B4513;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #D2691E;
+            border-radius: 10px;
+            font-size: 16px;
+            background: #FFFEF7;
+            font-family: inherit;
+        }
+
+        .character-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+            color: #FFF8DC;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+            font-family: inherit;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 69, 19, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show { display: block; }
+
+        .spinner {
+            border: 3px solid #F4A460;
+            border-top: 3px solid #8B4513;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .story-section {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .story-section.show { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .book-container {
+            position: relative;
+            background: linear-gradient(145deg, #FFFEF7 0%, #FFF8DC 100%);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #D2691E;
+            box-shadow: inset 0 2px 4px rgba(139, 69, 19, 0.1);
+            overflow: hidden;
+            height: 600px;
+        }
+
+        .story-page {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            padding: 40px;
+            line-height: 2.2;
+            font-size: 18px;
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.6s ease-in-out;
+            overflow-y: auto;
+        }
+
+        .story-page.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .story-page.prev {
+            transform: translateX(-100%);
+        }
+
+        .page-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .page-btn {
+            background: rgba(139, 69, 19, 0.8);
+            color: #FFF8DC;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: rgba(139, 69, 19, 1);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(139, 69, 19, 0.8);
+            color: #FFF8DC;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+        }
+
+        .feedback-section {
+            background: linear-gradient(145deg, #FFF8DC 0%, #F0E68C 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #DAA520;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #F4A460;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: #8B4513;
+        }
+
+        .step.active {
+            background: #8B4513;
+            color: #FFF8DC;
+        }
+
+        .step.completed {
+            background: #D2691E;
+            color: #FFF8DC;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #c62828;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .story-page { font-size: 16px; padding: 20px; }
+            .book-container { height: 500px; }
+            .character-inputs { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✨ AI小説ジェネレーター</h1>
+            <p>あなたの想像を物語に変えよう</p>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step active">一</div>
+            <div class="step">二</div>
+            <div class="step">三</div>
+        </div>
+
+        <!-- 入力フォーム -->
+        <div class="card" id="input-form">
+            <h2 style="margin-bottom: 25px; color: #8B4513; text-align: center;">📝 物語の設定</h2>
+            
+            <div class="form-group">
+                <label>登場人物の名前（三人）</label>
+                <div class="character-inputs">
+                    <input type="text" id="character1" placeholder="主人公の名前" required>
+                    <input type="text" id="character2" placeholder="二人目の名前" required>
+                    <input type="text" id="character3" placeholder="三人目の名前" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>舞台設定</label>
+                <input type="text" id="setting" placeholder="例：現代の東京、江戸時代の京都、未来の宇宙船など" required>
+            </div>
+
+            <div class="form-group">
+                <label>ジャンル</label>
+                <select id="genre" required>
+                    <option value="">ジャンルを選択してください</option>
+                    <option value="喜劇">喜劇</option>
+                    <option value="恋愛小説">恋愛小説</option>
+                    <option value="人間ドラマ">人間ドラマ</option>
+                    <option value="推理小説">推理小説</option>
+                    <option value="幻想小説">幻想小説</option>
+                    <option value="未来小説">未来小説</option>
+                    <option value="怪奇小説">怪奇小説</option>
+                    <option value="冒険小説">冒険小説</option>
+                </select>
+            </div>
+
+            <button class="btn" onclick="generateProlog()">序章を生成</button>
+        </div>
+
+        <!-- ローディング -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>AIが物語を紡いでいます...</p>
+        </div>
+
+        <!-- エラー表示 -->
+        <div id="error-display" class="error"></div>
+
+        <!-- プロローグ表示 -->
+        <div class="story-section" id="prolog-section">
+            <div class="card">
+                <h2 style="margin-bottom: 20px; color: #8B4513; text-align: center;">📖 序章（四百文字）</h2>
+                <div class="book-container">
+                    <div class="story-page active" id="prolog-content"></div>
+                </div>
+                
+                <div class="feedback-section">
+                    <h3 style="margin-bottom: 15px; color: #8B4513;">💭 ご意見をお聞かせください</h3>
+                    <div class="form-group">
+                        <label>この方向性はいかがでしょうか？調整したい点があれば教えてください：</label>
+                        <textarea id="feedback" rows="4" placeholder="例：もう少し滑稽な要素を入れてほしい、登場人物の関係性を変えたい、など"></textarea>
+                    </div>
+                </div>
+
+                <button class="btn" onclick="generateFullStory()">完成版（四千文字）を生成</button>
+            </div>
+        </div>
+
+        <!-- 完成版小説表示 -->
+        <div class="story-section" id="full-story-section">
+            <div class="card">
+                <h2 style="margin-bottom: 20px; color: #8B4513; text-align: center;">📚 完成版小説（四千文字）</h2>
+                <div class="book-container">
+                    <div class="page-indicator" id="page-indicator">1 / 1</div>
+                    <div id="story-pages"></div>
+                    <div class="page-controls">
+                        <button class="page-btn" id="prev-btn" onclick="prevPage()">← 前頁</button>
+                        <button class="page-btn" id="next-btn" onclick="nextPage()">次頁 →</button>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn" onclick="resetApp()" style="background: linear-gradient(135deg, #2F4F2F 0%, #228B22 100%);">新しい物語を作る</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let storyData = {};
+        let currentPage = 0;
+        let totalPages = 1;
+
+        function updateStepIndicator(step) {
+            document.querySelectorAll('.step').forEach((el, index) => {
+                el.classList.remove('active', 'completed');
+                if (index + 1 < step) {
+                    el.classList.add('completed');
+                } else if (index + 1 === step) {
+                    el.classList.add('active');
+                }
+            });
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-display');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 5000);
+        }
+
+        function splitTextIntoPages(text, charsPerPage = 600) {
+            const pages = [];
+            let currentPageText = '';
+            let charCount = 0;
+            
+            for (let i = 0; i < text.length; i++) {
+                currentPageText += text[i];
+                charCount++;
+                
+                if (charCount >= charsPerPage && (text[i] === '。' || text[i] === '！' || text[i] === '？')) {
+                    pages.push(currentPageText);
+                    currentPageText = '';
+                    charCount = 0;
+                }
+            }
+            
+            if (currentPageText.trim()) {
+                pages.push(currentPageText);
+            }
+            
+            return pages;
+        }
+
+        function displayPages(pages, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            pages.forEach((pageText, index) => {
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'story-page';
+                pageDiv.textContent = pageText;
+                if (index === 0) pageDiv.classList.add('active');
+                container.appendChild(pageDiv);
+            });
+            
+            totalPages = pages.length;
+            currentPage = 0;
+            updatePageIndicator();
+            updatePageButtons();
+        }
+
+        function nextPage() {
+            if (currentPage < totalPages - 1) {
+                const pages = document.querySelectorAll('.story-page');
+                pages[currentPage].classList.remove('active');
+                pages[currentPage].classList.add('prev');
+                currentPage++;
+                pages[currentPage].classList.add('active');
+                updatePageIndicator();
+                updatePageButtons();
+            }
+        }
+
+        function prevPage() {
+            if (currentPage > 0) {
+                const pages = document.querySelectorAll('.story-page');
+                pages[currentPage].classList.remove('active');
+                currentPage--;
+                pages[currentPage].classList.remove('prev');
+                pages[currentPage].classList.add('active');
+                updatePageIndicator();
+                updatePageButtons();
+            }
+        }
+
+        function updatePageIndicator() {
+            const indicator = document.getElementById('page-indicator');
+            if (indicator) {
+                indicator.textContent = \`\${currentPage + 1} / \${totalPages}\`;
+            }
+        }
+
+        function updatePageButtons() {
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            if (prevBtn) prevBtn.disabled = currentPage === 0;
+            if (nextBtn) nextBtn.disabled = currentPage === totalPages - 1;
+        }
+
+        async function generateProlog() {
+            const character1 = document.getElementById('character1').value.trim();
+            const character2 = document.getElementById('character2').value.trim();
+            const character3 = document.getElementById('character3').value.trim();
+            const setting = document.getElementById('setting').value.trim();
+            const genre = document.getElementById('genre').value;
+
+            if (!character1 || !character2 || !character3 || !setting || !genre) {
+                showError('すべての項目を入力してください。');
+                return;
+            }
+
+            storyData = {
+                characters: [character1, character2, character3],
+                setting,
+                genre
+            };
+
+            showLoading();
+
+            try {
+                const response = await fetch('/api/generate-prolog', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(storyData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'プロローグの生成に失敗しました');
+                }
+
+                const result = await response.json();
+                document.getElementById('prolog-content').textContent = result.prolog;
+                
+                document.getElementById('input-form').style.display = 'none';
+                document.getElementById('prolog-section').classList.add('show');
+                currentStep = 2;
+                updateStepIndicator(currentStep);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function generateFullStory() {
+            const feedback = document.getElementById('feedback').value.trim();
+            storyData.feedback = feedback;
+
+            showLoading();
+
+            try {
+                const response = await fetch('/api/generate-story', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(storyData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '小説の生成に失敗しました');
+                }
+
+                const result = await response.json();
+                const pages = splitTextIntoPages(result.story);
+                displayPages(pages, 'story-pages');
+                
+                document.getElementById('prolog-section').style.display = 'none';
+                document.getElementById('full-story-section').classList.add('show');
+                currentStep = 3;
+                updateStepIndicator(currentStep);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function resetApp() {
+            currentStep = 1;
+            storyData = {};
+            currentPage = 0;
+            totalPages = 1;
+            
+            ['character1', 'character2', 'character3', 'setting', 'genre', 'feedback'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            
+            document.getElementById('input-form').style.display = 'block';
+            document.getElementById('prolog-section').classList.remove('show');
+            document.getElementById('full-story-section').classList.remove('show');
+            document.getElementById('error-display').style.display = 'none';
+            updateStepIndicator(currentStep);
+        }
+
+        updateStepIndicator(currentStep);
+    </script>
+</body>
+</html>`;

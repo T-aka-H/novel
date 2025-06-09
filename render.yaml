@@ -1,0 +1,14 @@
+const renderYAML = `services:
+  - type: web
+    name: ai-novel-generator
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GEMINI_API_KEY
+        sync: false  # Renderダッシュボードで設定
+    healthCheckPath: /health
+    autoDeploy: true`;
