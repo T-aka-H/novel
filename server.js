@@ -4,6 +4,12 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
+// API KEYの存在チェック
+if (!process.env.GEMINI_API_KEY) {
+    console.error('Error: GEMINI_API_KEY environment variable is not set');
+    process.exit(1);
+}
+
 const app = express();
 const PORT = process.env.PORT || 10000;
 
@@ -30,6 +36,10 @@ app.use('/api', limiter);
 // Gemini API呼び出し関数
 async function callGeminiAPI(prompt) {
     try {
+        if (!process.env.GEMINI_API_KEY) {
+            throw new Error('GEMINI_API_KEY environment variable is not set');
+        }
+
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -45,13 +55,20 @@ async function callGeminiAPI(prompt) {
         });
 
         if (!response.ok) {
-            throw new Error(`Gemini API error: ${response.status}`);
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Gemini API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
         }
 
         const data = await response.json();
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+            throw new Error('AI応答が空でした');
+        }
+        return data.candidates[0].content.parts[0].text;
     } catch (error) {
         console.error('Gemini API Error:', error);
+        if (error.message.includes('API key')) {
+            throw new Error('APIキーの設定に問題があります');
+        }
         throw new Error('AI応答の生成に失敗しました');
     }
 }
@@ -97,7 +114,7 @@ app.post('/api/generate-story', async (req, res) => {
             return res.status(400).json({ error: '必要な情報が不足しています' });
         }
 
-        const prompt = `以下の設定で4000文字の完成小説を古典的な日本語文体で書いてください。
+        const prompt = `以下の設定で4000文字の完成小説を村上春樹の文体で書いてください。
 
 登場人物: ${characters.join('、')}
 舞台: ${setting}
@@ -107,7 +124,7 @@ ${feedback ? `要望: ${feedback}` : ''}
 要件:
 - 4000文字の完成作品
 - 起承転結の構成
-- 古典的文語調
+- 村上春樹調
 - 縦書き対応
 - キャラクター成長
 - 感動的結末
