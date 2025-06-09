@@ -209,23 +209,45 @@
             width: 100%;
             position: absolute;
             top: 0;
-            right: 0;
-            opacity: 0;
-            transform: translateX(100%);
-            transition: all 0.6s ease-in-out;
+            left: 0;
+            opacity: 1;
+            transform: translateX(0);
+            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             overflow-y: auto;
             background: linear-gradient(145deg, #faf8f0 0%, #f5f2e8 100%);
             color: #2a2a2a;
             font-weight: 400;
+            z-index: 1;
         }
 
         .story-page.active {
-            opacity: 1;
+            z-index: 3;
             transform: translateX(0);
         }
 
-        .story-page.prev {
-            transform: translateX(-100%);
+        .story-page.turning {
+            z-index: 4;
+            transform-origin: left center;
+            animation: pageFlip 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        @keyframes pageFlip {
+            0% {
+                transform: translateX(0) rotateY(0deg);
+            }
+            50% {
+                transform: translateX(-25%) rotateY(-90deg);
+                box-shadow: -10px 0 20px rgba(0,0,0,0.3);
+            }
+            100% {
+                transform: translateX(-100%) rotateY(-180deg);
+                opacity: 0;
+            }
+        }
+
+        .story-page.next-ready {
+            z-index: 2;
+            transform: translateX(0);
         }
 
         .page-controls {
@@ -532,9 +554,15 @@
                 const pageDiv = document.createElement('div');
                 pageDiv.className = 'story-page';
                 pageDiv.textContent = pageText;
+                
+                // 最初のページのみ表示、他は右側に隠す
                 if (index === 0) {
                     pageDiv.classList.add('active');
+                    pageDiv.style.transform = 'translateX(0)';
+                } else {
+                    pageDiv.style.transform = 'translateX(100%)';
                 }
+                
                 container.appendChild(pageDiv);
             });
             
@@ -545,55 +573,96 @@
             updatePageButtons();
         }
 
-        // 次のページ（縦書きなので右から左へ）
+        // ページ表示（本らしい初期配置）
+        function displayPages(pages, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            pages.forEach((pageText, index) => {
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'story-page';
+                pageDiv.textContent = pageText;
+                
+                // 最初のページのみアクティブ、他は後ろに隠す
+                if (index === 0) {
+                    pageDiv.classList.add('active');
+                } else {
+                    pageDiv.style.zIndex = '1';
+                }
+                
+                container.appendChild(pageDiv);
+            });
+            
+            storyPages = pages;
+            totalPages = pages.length;
+            currentPage = 0;
+            updatePageIndicator();
+            updatePageButtons();
+        }
+
+        // 次のページ（本をめくる動作）
         function nextPage() {
             if (currentPage < totalPages - 1) {
                 const currentPageEl = document.querySelectorAll('.story-page')[currentPage];
                 const nextPageEl = document.querySelectorAll('.story-page')[currentPage + 1];
                 
-                // 現在のページを左に移動
+                // 次のページを準備
+                nextPageEl.classList.add('next-ready');
+                
+                // 現在のページをめくるアニメーション
+                currentPageEl.classList.add('turning');
                 currentPageEl.classList.remove('active');
-                currentPageEl.classList.add('prev');
                 
                 setTimeout(() => {
-                    // 次のページを右から表示
+                    // 次のページをアクティブに
+                    nextPageEl.classList.remove('next-ready');
                     nextPageEl.classList.add('active');
+                    
+                    // 古いページのクラスをリセット
+                    currentPageEl.classList.remove('turning');
+                    currentPageEl.style.zIndex = '1';
+                    currentPageEl.style.transform = 'translateX(0)';
+                    currentPageEl.style.opacity = '1';
+                    
                     currentPage++;
                     updatePageIndicator();
                     updatePageButtons();
-                }, 100);
-                
-                setTimeout(() => {
-                    currentPageEl.classList.remove('prev');
-                }, 600);
+                }, 800);
             }
         }
 
-        // 前のページ（縦書きなので左から右へ）
+        // 前のページ（逆方向のめくり）
         function prevPage() {
             if (currentPage > 0) {
                 const currentPageEl = document.querySelectorAll('.story-page')[currentPage];
                 const prevPageEl = document.querySelectorAll('.story-page')[currentPage - 1];
                 
-                // 現在のページを右に移動
+                // 前のページを表示位置に配置
+                prevPageEl.style.zIndex = '4';
+                prevPageEl.style.transform = 'translateX(-100%) rotateY(-180deg)';
+                prevPageEl.style.opacity = '0';
+                prevPageEl.classList.add('active');
+                
+                // 現在のページを後ろに
                 currentPageEl.classList.remove('active');
+                currentPageEl.style.zIndex = '2';
+                
+                // 前のページが戻ってくるアニメーション
+                setTimeout(() => {
+                    prevPageEl.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.8s ease';
+                    prevPageEl.style.transform = 'translateX(0) rotateY(0deg)';
+                    prevPageEl.style.opacity = '1';
+                }, 50);
                 
                 setTimeout(() => {
-                    // 前のページを左から表示
-                    prevPageEl.classList.remove('prev');
-                    prevPageEl.classList.add('active');
+                    // リセット
+                    prevPageEl.style.transition = '';
+                    currentPageEl.style.zIndex = '1';
+                    
                     currentPage--;
                     updatePageIndicator();
                     updatePageButtons();
-                }, 100);
-                
-                setTimeout(() => {
-                    // 現在のページを右側に配置
-                    currentPageEl.style.transform = 'translateX(100%)';
-                    setTimeout(() => {
-                        currentPageEl.style.transform = '';
-                    }, 50);
-                }, 600);
+                }, 850);
             }
         }
 
@@ -772,7 +841,14 @@
             
             if (Math.abs(diff) > swipeThreshold) {
                 if (diff > 0) {
-                    // 左にスワイプ = 次ページ（縦書き）
+                    // 左にスワイプ = 次ページ（右→左）
+                    nextPage();
+                } else {
+                    // 右にスワイプ = 前ページ（左→右）
+                    prevPage();
+                }
+            }
+        }（縦書き）
                     nextPage();
                 } else {
                     // 右にスワイプ = 前ページ（縦書き）
