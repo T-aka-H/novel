@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>村Gemini春樹 - AIが紡ぐ現代文学</title>
     <meta name="description" content="村上春樹スタイルのAI小説ジェネレーター">
-    <link rel="stylesheet" href="style.css">
     <style>
         * {
             margin: 0;
@@ -461,8 +460,8 @@
                     <div class="page-indicator" id="page-indicator">1 / 1</div>
                     <div id="story-pages"></div>
                     <div class="page-controls">
-                        <button class="page-btn" id="next-btn" onclick="nextPage()">次頁 →</button>
                         <button class="page-btn" id="prev-btn" onclick="prevPage()">← 前頁</button>
+                        <button class="page-btn" id="next-btn" onclick="nextPage()">次頁 →</button>
                     </div>
                 </div>
                 
@@ -543,34 +542,6 @@
             }
             
             return pages;
-        }
-
-        // ページ表示
-        function displayPages(pages, containerId) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
-            
-            pages.forEach((pageText, index) => {
-                const pageDiv = document.createElement('div');
-                pageDiv.className = 'story-page';
-                pageDiv.textContent = pageText;
-                
-                // 最初のページのみ表示、他は右側に隠す
-                if (index === 0) {
-                    pageDiv.classList.add('active');
-                    pageDiv.style.transform = 'translateX(0)';
-                } else {
-                    pageDiv.style.transform = 'translateX(100%)';
-                }
-                
-                container.appendChild(pageDiv);
-            });
-            
-            storyPages = pages;
-            totalPages = pages.length;
-            currentPage = 0;
-            updatePageIndicator();
-            updatePageButtons();
         }
 
         // ページ表示（本らしい初期配置）
@@ -841,17 +812,10 @@
             
             if (Math.abs(diff) > swipeThreshold) {
                 if (diff > 0) {
-                    // 左にスワイプ = 次ページ（右→左）
+                    // 左にスワイプ = 次ページ
                     nextPage();
                 } else {
-                    // 右にスワイプ = 前ページ（左→右）
-                    prevPage();
-                }
-            }
-        }（縦書き）
-                    nextPage();
-                } else {
-                    // 右にスワイプ = 前ページ（縦書き）
+                    // 右にスワイプ = 前ページ
                     prevPage();
                 }
             }
