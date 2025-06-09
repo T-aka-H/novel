@@ -210,7 +210,7 @@
             top: 0;
             left: 0;
             opacity: 0;
-            transform: translateX(100%);
+            transform: translateX(-100%); /* 初期位置：左に隠れる */
             transition: all 0.6s ease-in-out;
             overflow-y: auto;
             background: linear-gradient(145deg, #faf8f0 0%, #f5f2e8 100%);
@@ -221,12 +221,17 @@
 
         .story-page.active {
             opacity: 1;
-            transform: translateX(0);
+            transform: translateX(0); /* 表示位置：中央 */
             z-index: 3;
         }
 
-        .story-page.prev {
-            transform: translateX(-100%);
+        .story-page.next-hidden {
+            transform: translateX(-100%); /* 次ページの待機位置：左に隠れる */
+            opacity: 0;
+        }
+
+        .story-page.prev-hidden {
+            transform: translateX(100%); /* 前ページの待機位置：右に隠れる */
             opacity: 0;
         }
 
@@ -525,7 +530,7 @@
             return pages;
         }
 
-        // ページ表示（シンプルな初期配置）
+        // ページ表示（正しい初期配置）
         function displayPages(pages, containerId) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
@@ -535,9 +540,11 @@
                 pageDiv.className = 'story-page';
                 pageDiv.textContent = pageText;
                 
-                // 最初のページのみアクティブ
+                // 最初のページのみアクティブ、他は左に隠す
                 if (index === 0) {
                     pageDiv.classList.add('active');
+                } else {
+                    pageDiv.classList.add('next-hidden');
                 }
                 
                 container.appendChild(pageDiv);
@@ -550,45 +557,45 @@
             updatePageButtons();
         }
 
-        // 次のページ（右から左へのスライド）
+        // 次のページ（現在のページが右に消え、新しいページが左から現れる）
         function nextPage() {
             if (currentPage < totalPages - 1) {
                 const allPages = document.querySelectorAll('.story-page');
                 const currentPageEl = allPages[currentPage];
                 const nextPageEl = allPages[currentPage + 1];
                 
-                // 現在のページを左に移動
+                // 現在のページを右に移動させて隠す
                 currentPageEl.classList.remove('active');
-                currentPageEl.classList.add('prev');
+                currentPageEl.classList.add('prev-hidden');
                 
-                // 次のページを右からスライドイン
-                setTimeout(() => {
-                    nextPageEl.classList.add('active');
-                    currentPage++;
-                    updatePageIndicator();
-                    updatePageButtons();
-                }, 100);
+                // 次のページを左から中央にスライドイン
+                nextPageEl.classList.remove('next-hidden');
+                nextPageEl.classList.add('active');
+                
+                currentPage++;
+                updatePageIndicator();
+                updatePageButtons();
             }
         }
 
-        // 前のページ（左から右へのスライド）
+        // 前のページ（現在のページが左に消え、前のページが右から現れる）
         function prevPage() {
             if (currentPage > 0) {
                 const allPages = document.querySelectorAll('.story-page');
                 const currentPageEl = allPages[currentPage];
                 const prevPageEl = allPages[currentPage - 1];
                 
-                // 現在のページを右に移動
+                // 現在のページを左に移動させて隠す
                 currentPageEl.classList.remove('active');
+                currentPageEl.classList.add('next-hidden');
                 
-                // 前のページを左からスライドイン
-                setTimeout(() => {
-                    prevPageEl.classList.remove('prev');
-                    prevPageEl.classList.add('active');
-                    currentPage--;
-                    updatePageIndicator();
-                    updatePageButtons();
-                }, 100);
+                // 前のページを右から中央にスライドイン
+                prevPageEl.classList.remove('prev-hidden');
+                prevPageEl.classList.add('active');
+                
+                currentPage--;
+                updatePageIndicator();
+                updatePageButtons();
             }
         }
 
