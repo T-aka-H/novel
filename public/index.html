@@ -204,81 +204,38 @@
             padding: 40px;
             line-height: 2.4;
             font-size: 18px;
-            height: 100%;
             width: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            transform: translateX(-100%); /* 初期位置：左に隠れる */
-            transition: all 0.6s ease-in-out;
-            overflow-y: auto;
+            /* position: absolute を削除してスクロール可能に */
+            overflow-y: visible;
             background: linear-gradient(145deg, #faf8f0 0%, #f5f2e8 100%);
             color: #2a2a2a;
             font-weight: 400;
-            z-index: 1;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 20px;
         }
 
-        .story-page.active {
-            opacity: 1;
-            transform: translateX(0); /* 表示位置：中央 */
-            z-index: 3;
+        .story-page:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
         }
 
-        .story-page.next-hidden {
-            transform: translateX(-100%); /* 次ページの待機位置：左に隠れる */
-            opacity: 0;
+        .story-container {
+            height: 600px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 20px;
+            background: linear-gradient(145deg, #faf8f0 0%, #f5f2e8 100%);
+            border-radius: 15px;
         }
 
-        .story-page.prev-hidden {
-            transform: translateX(100%); /* 前ページの待機位置：右に隠れる */
-            opacity: 0;
-        }
+        /* 削除：不要になったクラス */
+        /* .story-page.active, .story-page.next-hidden, .story-page.prev-hidden は削除 */
 
-        .page-controls {
-            /* 削除：position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); */
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 20px 0;
-            z-index: 10;
-        }
-
-        .page-btn {
-            background: rgba(80, 80, 80, 0.9);
-            color: #ffffff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .page-btn:hover:not(:disabled) {
-            background: rgba(60, 60, 60, 1);
-            transform: translateY(-2px);
-        }
-
-        .page-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
+        /* ページコントロール関連のCSSを削除 */
+        /* .page-controls, .page-btn は削除 */
 
         .page-indicator {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(80, 80, 80, 0.9);
-            color: #ffffff;
-            padding: 8px 15px;
-            border-radius: 15px;
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 10;
+            /* 削除：ページインジケーターも不要 */
         }
 
         .feedback-section {
@@ -354,8 +311,10 @@
             .story-page { font-size: 16px; padding: 20px; line-height: 2.2; }
             .book-container, .book-container.novel { height: 500px; }
             .character-inputs { grid-template-columns: 1fr; }
-            .page-controls { flex-direction: column; gap: 5px; }
-            .page-btn { padding: 8px 16px; font-size: 13px; }
+            .story-container { 
+                height: 400px; 
+                padding: 15px;
+            }
         }
     </style>
 </head>
@@ -442,13 +401,7 @@
             <div class="card">
                 <h2>📚 完成版小説（四千文字）</h2>
                 <div class="book-container novel">
-                    <div class="page-indicator" id="page-indicator">1 / 1</div>
-                    <div id="story-pages"></div>
-                </div>
-                
-                <div class="page-controls">
-                    <button class="page-btn" id="prev-btn" onclick="prevPage()">← 前頁</button>
-                    <button class="page-btn" id="next-btn" onclick="nextPage()">次頁 →</button>
+                    <div class="story-container" id="story-pages"></div>
                 </div>
                 
                 <div class="reset-section">
@@ -461,8 +414,6 @@
     <script>
         let currentStep = 1;
         let storyData = {};
-        let currentPage = 0;
-        let totalPages = 1;
         let storyPages = [];
 
         // ステップインジケーター更新
@@ -530,91 +481,25 @@
             return pages;
         }
 
-        // ページ表示（正しい初期配置）
+        // ページ表示（スクロール用の連続表示）
         function displayPages(pages, containerId) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
             
+            // すべてのページを連続して表示
             pages.forEach((pageText, index) => {
                 const pageDiv = document.createElement('div');
                 pageDiv.className = 'story-page';
                 pageDiv.textContent = pageText;
-                
-                // 最初のページのみアクティブ、他は左に隠す
-                if (index === 0) {
-                    pageDiv.classList.add('active');
-                } else {
-                    pageDiv.classList.add('next-hidden');
-                }
-                
                 container.appendChild(pageDiv);
             });
             
             storyPages = pages;
             totalPages = pages.length;
-            currentPage = 0;
-            updatePageIndicator();
-            updatePageButtons();
         }
 
-        // 次のページ（現在のページが右に消え、新しいページが左から現れる）
-        function nextPage() {
-            if (currentPage < totalPages - 1) {
-                const allPages = document.querySelectorAll('.story-page');
-                const currentPageEl = allPages[currentPage];
-                const nextPageEl = allPages[currentPage + 1];
-                
-                // 現在のページを右に移動させて隠す
-                currentPageEl.classList.remove('active');
-                currentPageEl.classList.add('prev-hidden');
-                
-                // 次のページを左から中央にスライドイン
-                nextPageEl.classList.remove('next-hidden');
-                nextPageEl.classList.add('active');
-                
-                currentPage++;
-                updatePageIndicator();
-                updatePageButtons();
-            }
-        }
-
-        // 前のページ（現在のページが左に消え、前のページが右から現れる）
-        function prevPage() {
-            if (currentPage > 0) {
-                const allPages = document.querySelectorAll('.story-page');
-                const currentPageEl = allPages[currentPage];
-                const prevPageEl = allPages[currentPage - 1];
-                
-                // 現在のページを左に移動させて隠す
-                currentPageEl.classList.remove('active');
-                currentPageEl.classList.add('next-hidden');
-                
-                // 前のページを右から中央にスライドイン
-                prevPageEl.classList.remove('prev-hidden');
-                prevPageEl.classList.add('active');
-                
-                currentPage--;
-                updatePageIndicator();
-                updatePageButtons();
-            }
-        }
-
-        // ページインジケーター更新
-        function updatePageIndicator() {
-            const indicator = document.getElementById('page-indicator');
-            if (indicator) {
-                indicator.textContent = `${currentPage + 1} / ${totalPages}`;
-            }
-        }
-
-        // ページボタン状態更新
-        function updatePageButtons() {
-            const prevBtn = document.getElementById('prev-btn');
-            const nextBtn = document.getElementById('next-btn');
-            
-            if (prevBtn) prevBtn.disabled = currentPage === 0;
-            if (nextBtn) nextBtn.disabled = currentPage === totalPages - 1;
-        }
+        // ページめくり関数は削除（不要）
+        // nextPage(), prevPage(), updatePageIndicator(), updatePageButtons() を削除
 
         // プロローグ生成
         async function generateProlog() {
@@ -705,12 +590,10 @@
             }
         }
 
-        // アプリリセット
+        // アプリリセット（ページ管理変数を削除）
         function resetApp() {
             currentStep = 1;
             storyData = {};
-            currentPage = 0;
-            totalPages = 1;
             storyPages = [];
             
             // フォームクリア
@@ -729,19 +612,8 @@
             updateStepIndicator(currentStep);
         }
 
-        // キーボードショートカット
+        // キーボードショートカット（スクロール用に簡素化）
         document.addEventListener('keydown', (event) => {
-            // 小説表示時のキーボード操作
-            if (currentStep === 3) {
-                if (event.key === 'ArrowLeft' || event.key === 'a' || event.key === 'A') {
-                    event.preventDefault();
-                    nextPage(); // 縦書きでは左キーで次ページ
-                } else if (event.key === 'ArrowRight' || event.key === 'd' || event.key === 'D') {
-                    event.preventDefault();
-                    prevPage(); // 縦書きでは右キーで前ページ
-                }
-            }
-            
             // ESCキーでエラーメッセージを閉じる
             if (event.key === 'Escape') {
                 const errorDiv = document.getElementById('error-display');
@@ -751,37 +623,7 @@
             }
         });
 
-        // タッチ/マウスでのページめくり
-        let touchStartX = 0;
-        let touchEndX = 0;
-
-        document.addEventListener('touchstart', (event) => {
-            if (currentStep === 3) {
-                touchStartX = event.changedTouches[0].screenX;
-            }
-        }, { passive: true });
-
-        document.addEventListener('touchend', (event) => {
-            if (currentStep === 3) {
-                touchEndX = event.changedTouches[0].screenX;
-                handleSwipe();
-            }
-        }, { passive: true });
-
-        function handleSwipe() {
-            const swipeThreshold = 50;
-            const diff = touchStartX - touchEndX;
-            
-            if (Math.abs(diff) > swipeThreshold) {
-                if (diff > 0) {
-                    // 左にスワイプ = 次ページ
-                    nextPage();
-                } else {
-                    // 右にスワイプ = 前ページ
-                    prevPage();
-                }
-            }
-        }
+        // タッチ操作は削除（スクロールに任せる）
 
         // ページ読み込み完了時の初期化
         document.addEventListener('DOMContentLoaded', () => {
