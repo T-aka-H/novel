@@ -236,12 +236,11 @@
         }
 
         .page-controls {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            /* 削除：position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); */
             display: flex;
-            gap: 10px;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
             z-index: 10;
         }
 
@@ -445,10 +444,11 @@
                 <div class="book-container novel">
                     <div class="page-indicator" id="page-indicator">1 / 1</div>
                     <div id="story-pages"></div>
-                    <div class="page-controls">
-                        <button class="page-btn" id="prev-btn" onclick="prevPage()">← 前頁</button>
-                        <button class="page-btn" id="next-btn" onclick="nextPage()">次頁 →</button>
-                    </div>
+                </div>
+                
+                <div class="page-controls">
+                    <button class="page-btn" id="prev-btn" onclick="prevPage()">← 前頁</button>
+                    <button class="page-btn" id="next-btn" onclick="nextPage()">次頁 →</button>
                 </div>
                 
                 <div class="reset-section">
