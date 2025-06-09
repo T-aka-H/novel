@@ -1,0 +1,218 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', 'HiraMinProN-W3', 'MS P明朝', serif;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #404040 100%);
+    min-height: 100vh;
+    color: #f0f0f0;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    color: #ffffff;
+}
+
+.header h1 {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    font-weight: 300;
+    letter-spacing: 4px;
+}
+
+.header p {
+    font-size: 1.2rem;
+    opacity: 0.85;
+    letter-spacing: 2px;
+    font-weight: 300;
+}
+
+.card {
+    background: linear-gradient(145deg, #e8e8e8 0%, #d4d4d4 100%);
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(120, 120, 120, 0.3);
+    color: #1a1a1a;
+}
+
+.card h2 {
+    margin-bottom: 25px;
+    color: #2a2a2a;
+    text-align: center;
+    font-weight: 400;
+    font-size: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2a2a2a;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #666;
+    border-radius: 10px;
+    font-size: 16px;
+    background: #ffffff;
+    font-family: inherit;
+    transition: border-color 0.3s ease;
+    color: #1a1a1a;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #333;
+    box-shadow: 0 0 0 3px rgba(80, 80, 80, 0.2);
+}
+
+.character-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.btn {
+    background: linear-gradient(135deg, #333 0%, #555 100%);
+    color: #ffffff;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-top: 10px;
+    font-family: inherit;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    background: linear-gradient(135deg, #222 0%, #444 100%);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.reset-btn {
+    background: linear-gradient(135deg, #444 0%, #666 100%);
+    margin-top: 20px;
+}
+
+.loading {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    color: #ffffff;
+}
+
+.loading.show {
+    display: block;
+}
+
+.spinner {
+    border: 3px solid #666;
+    border-top: 3px solid #ccc;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.story-section {
+    display: none;
+    animation: fadeIn 0.5s ease-in;
+}
+
+.story-section.show {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 小説表示部分 - 生成り色 */
+.book-container {
+    position: relative;
+    background: linear-gradient(145deg, #faf8f0 0%, #f5f2e8 100%);
+    border-radius: 15px;
+    margin-bottom: 20px;
+    border: 2px solid #999;
+    box-shadow: 
+        inset 0 2px 4px rgba(139, 69, 19, 0.1),
+        0 10px 30px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    height: 600px;
+}
+
+.book-container.novel {
+    background: linear-gradient(145deg, #faf8f0 0%, #f5f2e8 100%);
+    border: 3px solid #8B7355;
+    box-shadow: 
+        inset 0 2px 4px rgba(139, 115, 85, 0.2),
+        0 15px 40px rgba(0, 0, 0, 0.4);
+}
+
+.story-page {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    padding: 40px;
+    line-height: 2.4;
+    font-size: 18px;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    right: 0; /* 縦書きなので右側から開始 */
+    opacity: 0;
+    transform: translateX(100%); /* 右から左へ */
+    transition: all 0.6s ease-in-out;
+    overflow-y: auto;
+    background: linear-gradient(145deg, #faf8f0 0%, #f5f2e8 100%);
+    color: #2a2a2a;
+    font-weight: 400;
+}
+
+.story-page.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.
