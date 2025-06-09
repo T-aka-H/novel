@@ -204,28 +204,48 @@
             padding: 40px;
             line-height: 2.4;
             font-size: 18px;
-            width: 100%;
-            /* position: absolute を削除してスクロール可能に */
-            overflow-y: visible;
+            height: 100%;
+            min-width: 500px; /* 各ページの最小幅 */
+            flex-shrink: 0; /* ページが縮まないように */
             background: linear-gradient(145deg, #faf8f0 0%, #f5f2e8 100%);
             color: #2a2a2a;
             font-weight: 400;
-            border-bottom: 2px solid #e0e0e0;
-            margin-bottom: 20px;
+            border-right: 2px solid #e0e0e0; /* 右側にボーダー */
         }
 
         .story-page:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
+            border-right: none;
         }
 
         .story-container {
             height: 600px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding: 20px;
+            overflow-x: auto; /* 横スクロール */
+            overflow-y: hidden; /* 縦スクロール無効 */
+            display: flex; /* フレックスレイアウトで横並び */
+            flex-direction: row; /* 横方向に配置 */
             background: linear-gradient(145deg, #faf8f0 0%, #f5f2e8 100%);
             border-radius: 15px;
+            padding: 0; /* パディングを削除 */
+            direction: rtl; /* 右から左へのスクロール */
+        }
+
+        /* スクロールバーのスタイリング */
+        .story-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .story-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .story-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        .story-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
 
         /* 削除：不要になったクラス */
@@ -308,12 +328,16 @@
             .container { padding: 10px; }
             .header h1 { font-size: 2.2rem; letter-spacing: 2px; }
             .header p { font-size: 1rem; }
-            .story-page { font-size: 16px; padding: 20px; line-height: 2.2; }
+            .story-page { 
+                font-size: 16px; 
+                padding: 20px; 
+                line-height: 2.2; 
+                min-width: 350px; /* モバイルでの最小幅を調整 */
+            }
             .book-container, .book-container.novel { height: 500px; }
             .character-inputs { grid-template-columns: 1fr; }
             .story-container { 
-                height: 400px; 
-                padding: 15px;
+                height: 400px;
             }
         }
     </style>
