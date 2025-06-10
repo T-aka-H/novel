@@ -333,20 +333,22 @@
             .header p { font-size: 1rem; }
             .story-page { 
                 font-size: 16px; 
-                padding: 15px 15px 5px 15px; /* 下のパディングを大幅削減 */
+                padding: 10px 15px 0px 15px; /* 下のパディングを完全に削除 */
                 line-height: 2.2; 
                 min-width: 350px;
-                height: auto; /* 高さを自動調整 */
-                min-height: 100%; /* 最小高さは保持 */
+                height: calc(100% - 10px); /* 高さを計算で調整 */
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start; /* 上詰め */
             }
             .book-container, .book-container.novel { 
-                height: 450px; /* 高さを少し削減 */
+                height: 400px; /* さらに高さを削減 */
                 margin-bottom: 10px;
             }
             .character-inputs { grid-template-columns: 1fr; }
             .story-container { 
-                height: 400px; /* コンテナ高さも削減 */
-                padding: 5px 0 2px 0; /* 下のパディングをさらに削減 */
+                height: 350px; /* コンテナ高さをさらに削減 */
+                padding: 0; /* パディングを完全に削除 */
             }
             .reset-section {
                 margin-top: 10px;
