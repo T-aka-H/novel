@@ -12,8 +12,8 @@ console.log('📍 GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? '設定済み' 
 
 // API KEYチェック
 if (!process.env.GEMINI_API_KEY) {
-    console.error('❌ GEMINI_API_KEY が設定されていません');
-    process.exit(1);
+    console.error('❌ GEMINI_API_KEY が設定されていません');
+    process.exit(1);
 }
 
 const app = express();
@@ -23,9 +23,9 @@ const PORT = process.env.PORT || 10000;
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '1mb' }));
 app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type']
+    origin: '*',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type']
 }));
 
 // 静的ファイル配信
@@ -33,139 +33,141 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // レート制限
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15分
-    max: 30,
-    message: { error: 'リクエストが多すぎます。15分後に再度お試しください。' }
+    windowMs: 15 * 60 * 1000, // 15分
+    max: 30,
+    message: { error: 'リクエストが多すぎます。15分後に再度お試しください。' }
 });
 app.use('/api', limiter);
 
 // リクエストログ
 app.use((req, res, next) => {
-    console.log(`📝 [${new Date().toISOString()}] ${req.method} ${req.path}`);
-    next();
+    console.log(`📝 [${new Date().toISOString()}] ${req.method} ${req.path}`);
+    next();
 });
 
-// Gemini API呼び出し関数（gemini-1.5-flash専用）
+// Gemini API呼び出し関数（モデル名修正済み）
 async function callGeminiAPI(prompt) {
-    console.log('🤖 Gemini 1.5 Flash API呼び出し開始...');
-    
-    try {
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            throw new Error('GEMINI_API_KEY が設定されていません');
-        }
-        
-        // gemini-1.5-flash 専用URL
-        const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-        
-        const requestBody = {
-            contents: [{ 
-                parts: [{ text: prompt }] 
-            }],
-            generationConfig: {
-                temperature: 0.8,
-                topK: 40,
-                topP: 0.95,
-                maxOutputTokens: 2048,
-            },
-            safetySettings: [
-                {
-                    category: "HARM_CATEGORY_HARASSMENT",
-                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
-                },
-                {
-                    category: "HARM_CATEGORY_HATE_SPEECH",
-                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
-                },
-                {
-                    category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
-                },
-                {
-                    category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
-                }
-            ]
-        };
-        
-        console.log('📡 Gemini 1.5 Flash にリクエスト送信中...');
-        
-        const response = await fetch(`${apiUrl}?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'User-Agent': 'MuraGeminiHaruki/1.0'
-            },
-            body: JSON.stringify(requestBody)
-        });
-        
-        console.log('📨 API応答ステータス:', response.status);
-        
-        if (!response.ok) {
-            let errorMessage = `HTTP ${response.status}`;
-            try {
-                const errorData = await response.json();
-                console.error('❌ Gemini API エラー:', errorData);
-                if (errorData.error) {
-                    errorMessage = errorData.error.message || errorMessage;
-                }
-            } catch (e) {
-                console.error('❌ エラーレスポンスのパース失敗');
-            }
-            throw new Error(errorMessage);
-        }
-        
-        const data = await response.json();
-        console.log('✅ Gemini 1.5 Flash 応答受信成功');
-        
-        if (!data.candidates || data.candidates.length === 0) {
-            throw new Error('AI応答が生成されませんでした');
-        }
-        
-        const candidate = data.candidates[0];
-        if (!candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
-            throw new Error('AI応答のコンテンツが空です');
-        }
-        
-        const generatedText = candidate.content.parts[0].text;
-        if (!generatedText) {
-            throw new Error('生成されたテキストが空です');
-        }
-        
-        console.log('✅ テキスト生成成功 - 文字数:', generatedText.length);
-        return generatedText.trim();
-        
-    } catch (error) {
-        console.error('❌ Gemini 1.5 Flash API エラー:', error);
-        throw error;
-    }
+    // 💡 修正点: モデル名を 'gemini-2.5-flash' に変更（v1betaでサポートされているモデル）
+    const modelName = 'gemini-2.5-flash'; 
+    console.log(`🤖 ${modelName} API呼び出し開始...`);
+    
+    try {
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            throw new Error('GEMINI_API_KEY が設定されていません');
+        }
+        
+        // 💡 修正点: モデル名を動的に組み込むように変更
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
+        
+        const requestBody = {
+            contents: [{ 
+                parts: [{ text: prompt }] 
+            }],
+            generationConfig: {
+                temperature: 0.8,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 2048,
+            },
+            safetySettings: [
+                {
+                    category: "HARM_CATEGORY_HARASSMENT",
+                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                    category: "HARM_CATEGORY_HATE_SPEECH",
+                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                    category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                    category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                    threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                }
+            ]
+        };
+        
+        console.log(`📡 ${modelName} にリクエスト送信中...`);
+        
+        const response = await fetch(`${apiUrl}?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'User-Agent': 'MuraGeminiHaruki/1.0'
+            },
+            body: JSON.stringify(requestBody)
+        });
+        
+        console.log('📨 API応答ステータス:', response.status);
+        
+        if (!response.ok) {
+            let errorMessage = `HTTP ${response.status}`;
+            try {
+                const errorData = await response.json();
+                console.error('❌ Gemini API エラー:', errorData);
+                if (errorData.error) {
+                    errorMessage = errorData.error.message || errorMessage;
+                }
+            } catch (e) {
+                console.error('❌ エラーレスポンスのパース失敗');
+            }
+            throw new Error(errorMessage);
+        }
+        
+        const data = await response.json();
+        console.log(`✅ ${modelName} 応答受信成功`);
+        
+        if (!data.candidates || data.candidates.length === 0) {
+            throw new Error('AI応答が生成されませんでした');
+        }
+        
+        const candidate = data.candidates[0];
+        if (!candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
+            throw new Error('AI応答のコンテンツが空です');
+        }
+        
+        const generatedText = candidate.content.parts[0].text;
+        if (!generatedText) {
+            throw new Error('生成されたテキストが空です');
+        }
+        
+        console.log('✅ テキスト生成成功 - 文字数:', generatedText.length);
+        return generatedText.trim();
+        
+    } catch (error) {
+        console.error(`❌ ${modelName} API エラー:`, error);
+        throw error;
+    }
 }
 
 // プロローグ生成API
 app.post('/api/generate-prolog', async (req, res) => {
-    console.log('📖 プロローグ生成開始');
-    
-    try {
-        const { characters, setting, genre } = req.body;
+    console.log('📖 プロローグ生成開始');
+    
+    try {
+        const { characters, setting, genre } = req.body;
 
-        // 入力値検証
-        if (!characters || !Array.isArray(characters) || characters.length !== 3) {
-            return res.status(400).json({ 
-                error: '登場人物3人を正しく入力してください' 
-            });
-        }
-        
-        if (!setting || !genre) {
-            return res.status(400).json({ 
-                error: '舞台設定とジャンルを入力してください' 
-            });
-        }
+        // 入力値検証
+        if (!characters || !Array.isArray(characters) || characters.length !== 3) {
+            return res.status(400).json({ 
+                error: '登場人物3人を正しく入力してください' 
+            });
+        }
+        
+        if (!setting || !genre) {
+            return res.status(400).json({ 
+                error: '舞台設定とジャンルを入力してください' 
+            });
+        }
 
-        console.log('👥 登場人物:', characters);
-        console.log('🏛️ 舞台:', setting);
-        console.log('🎭 ジャンル:', genre);
+        console.log('👥 登場人物:', characters);
+        console.log('🏛️ 舞台:', setting);
+        console.log('🎭 ジャンル:', genre);
 
-        const prompt = `以下の設定で400文字程度の小説プロローグを村上春樹の文体で書いてください。
+        const prompt = `以下の設定で400文字程度の小説プロローグを村上春樹の文体で書いてください。
 
 ## 設定
 - 登場人物: ${characters.join('、')}
@@ -195,45 +197,45 @@ app.post('/api/generate-prolog', async (req, res) => {
 - 現代的で自然な日本語を使用
 - 村上春樹の代表作のような雰囲気を意識する`;
 
-        const prolog = await callGeminiAPI(prompt);
-        
-        console.log('✅ プロローグ生成成功');
-        res.json({ prolog });
+        const prolog = await callGeminiAPI(prompt);
+        
+        console.log('✅ プロローグ生成成功');
+        res.json({ prolog });
 
-    } catch (error) {
-        console.error('❌ プロローグ生成エラー:', error);
-        
-        if (error.message.includes('認証') || error.message.includes('APIキー')) {
-            res.status(503).json({ error: 'サービス設定エラーです。管理者にお問い合わせください。' });
-        } else if (error.message.includes('制限') || error.message.includes('上限')) {
-            res.status(429).json({ error: 'API利用制限に達しました。しばらく待ってから再度お試しください。' });
-        } else {
-            res.status(500).json({ error: 'プロローグの生成中にエラーが発生しました。もう一度お試しください。' });
-        }
-    }
+    } catch (error) {
+        console.error('❌ プロローグ生成エラー:', error);
+        
+        if (error.message.includes('認証') || error.message.includes('APIキー')) {
+            res.status(503).json({ error: 'サービス設定エラーです。管理者にお問い合わせください。' });
+        } else if (error.message.includes('制限') || error.message.includes('上限') || error.message.includes('429')) {
+            res.status(429).json({ error: 'API利用制限に達しました。しばらく待ってから再度お試しください。' });
+        } else {
+            res.status(500).json({ error: 'プロローグの生成中にエラーが発生しました。もう一度お試しください。' });
+        }
+    }
 });
 
 // 完成版小説生成API
 app.post('/api/generate-story', async (req, res) => {
-    console.log('📚 完成版小説生成開始');
-    
-    try {
-        const { characters, setting, genre, feedback } = req.body;
+    console.log('📚 完成版小説生成開始');
+    
+    try {
+        const { characters, setting, genre, feedback } = req.body;
 
-        if (!characters || !Array.isArray(characters) || characters.length !== 3) {
-            return res.status(400).json({ error: '登場人物3人が必要です' });
-        }
-        
-        if (!setting || !genre) {
-            return res.status(400).json({ error: '舞台設定とジャンルを入力してください' });
-        }
+        if (!characters || !Array.isArray(characters) || characters.length !== 3) {
+            return res.status(400).json({ error: '登場人物3人が必要です' });
+        }
+        
+        if (!setting || !genre) {
+            return res.status(400).json({ error: '舞台設定とジャンルを入力してください' });
+        }
 
-        console.log('👥 登場人物:', characters);
-        console.log('🏛️ 舞台:', setting);
-        console.log('🎭 ジャンル:', genre);
-        console.log('💭 フィードバック:', feedback || 'なし');
+        console.log('👥 登場人物:', characters);
+        console.log('🏛️ 舞台:', setting);
+        console.log('🎭 ジャンル:', genre);
+        console.log('💭 フィードバック:', feedback || 'なし');
 
-        const prompt = `以下の設定で4000文字程度の完成された小説を村上春樹の文体で書いてください。
+        const prompt = `以下の設定で4000文字程度の完成された小説を村上春樹の文体で書いてください。
 
 ## 設定
 - 登場人物: ${characters.join('、')}
@@ -275,57 +277,57 @@ ${feedback ? `- ユーザーからの要望: ${feedback}` : ''}
 - 村上春樹の代表作品の雰囲気を意識する
 - 読者が深い余韻と満足感を得られる作品にする`;
 
-        const story = await callGeminiAPI(prompt);
-        
-        console.log('✅ 完成版小説生成成功');
-        res.json({ story });
+        const story = await callGeminiAPI(prompt);
+        
+        console.log('✅ 完成版小説生成成功');
+        res.json({ story });
 
-    } catch (error) {
-        console.error('❌ 完成版小説生成エラー:', error);
-        
-        if (error.message.includes('認証') || error.message.includes('APIキー')) {
-            res.status(503).json({ error: 'サービス設定エラーです。管理者にお問い合わせください。' });
-        } else if (error.message.includes('制限') || error.message.includes('上限')) {
-            res.status(429).json({ error: 'API利用制限に達しました。しばらく待ってから再度お試しください。' });
-        } else {
-            res.status(500).json({ error: '小説の生成中にエラーが発生しました。もう一度お試しください。' });
-        }
-    }
+    } catch (error) {
+        console.error('❌ 完成版小説生成エラー:', error);
+        
+        if (error.message.includes('認証') || error.message.includes('APIキー')) {
+            res.status(503).json({ error: 'サービス設定エラーです。管理者にお問い合わせください。' });
+        } else if (error.message.includes('制限') || error.message.includes('上限') || error.message.includes('429')) {
+            res.status(429).json({ error: 'API利用制限に達しました。しばらく待ってから再度お試しください。' });
+        } else {
+            res.status(500).json({ error: '小説の生成中にエラーが発生しました。もう一度お試しください。' });
+        }
+    }
 });
 
 // メインページ
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ヘルスチェック
 app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
-        timestamp: new Date().toISOString(),
-        service: '村Gemini春樹',
-        hasGeminiKey: !!process.env.GEMINI_API_KEY
-    });
+    res.json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        service: '村Gemini春樹',
+        hasGeminiKey: !!process.env.GEMINI_API_KEY
+    });
 });
 
 // 404ハンドラー
 app.use((req, res) => {
-    res.status(404).json({ error: 'ページが見つかりません' });
+    res.status(404).json({ error: 'ページが見つかりません' });
 });
 
 // エラーハンドラー
 app.use((err, req, res, next) => {
-    console.error('❌ サーバーエラー:', err);
-    res.status(500).json({ 
-        error: 'サーバー内部エラーが発生しました',
-        timestamp: new Date().toISOString()
-    });
+    console.error('❌ サーバーエラー:', err);
+    res.status(500).json({ 
+        error: 'サーバー内部エラーが発生しました',
+        timestamp: new Date().toISOString()
+    });
 });
 
 // サーバー起動
 app.listen(PORT, '0.0.0.0', () => {
-    console.log('🌟 村Gemini春樹 サーバー起動完了!');
-    console.log(`📡 ポート: ${PORT}`);
-    console.log(`🔑 Gemini APIキー: ${process.env.GEMINI_API_KEY ? '設定済み' : '未設定'}`);
-    console.log(`⏰ 開始時刻: ${new Date().toISOString()}`);
+    console.log('🌟 村Gemini春樹 サーバー起動完了!');
+    console.log(`📡 ポート: ${PORT}`);
+    console.log(`🔑 Gemini APIキー: ${process.env.GEMINI_API_KEY ? '設定済み' : '未設定'}`);
+    console.log(`⏰ 開始時刻: ${new Date().toISOString()}`);
 });
