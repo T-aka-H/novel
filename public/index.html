@@ -51,7 +51,7 @@
             background: linear-gradient(145deg, #e8e8e8 0%, #d4d4d4 100%);
             border-radius: 15px;
             padding: 30px;
-            margin-bottom: 15px; /* カード間の余白も削減 */
+            margin-bottom: 15px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(120, 120, 120, 0.3);
             color: #1a1a1a;
@@ -196,69 +196,62 @@
             box-shadow: 
                 inset 0 2px 4px rgba(139, 115, 85, 0.2),
                 0 15px 40px rgba(0, 0, 0, 0.4);
-            margin-bottom: 15px; /* 余白を大幅に削減 */
+            margin-bottom: 15px;
         }
 
+        /* 縦書き用ストーリーコンテナ */
+        .story-container {
+            height: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            background: linear-gradient(145deg, #faf8f0 0%, #f5f2e8 100%);
+            border-radius: 15px;
+            direction: rtl; /* 右から左へのスクロール */
+        }
+
+        /* 縦書きテキスト表示 - 修正版 */
         .story-page {
             writing-mode: vertical-rl;
-            text-orientation: upright;
-            padding: 20px; /* 上下のパディングを削減 */
-            line-height: 2.4;
+            text-orientation: mixed; /* uprightからmixedに変更 */
+            padding: 30px 20px;
+            line-height: 2.2;
             font-size: 18px;
             height: 100%;
-            min-width: 500px; /* 各ページの最小幅 */
-            flex-shrink: 0; /* ページが縮まないように */
             background: linear-gradient(145deg, #faf8f0 0%, #f5f2e8 100%);
             color: #2a2a2a;
             font-weight: 400;
-            border-right: 2px solid #e0e0e0; /* 右側にボーダー */
-            display: flex;
-            align-items: flex-start; /* 上詰めで配置 */
+            text-align: justify;
+            /* 改行の扱いを改善 */
+            white-space: pre-line; /* 連続した空白は1つに、改行は保持 */
+            word-break: normal;
+            overflow-wrap: break-word;
+            direction: ltr; /* テキスト自体は左から右（縦書きでは上から下） */
         }
 
-        .story-page:last-child {
-            border-right: none;
-        }
-
-        .story-container {
-            height: 600px;
-            overflow-x: auto; /* 横スクロール */
-            overflow-y: hidden; /* 縦スクロール無効 */
-            display: flex; /* フレックスレイアウトで横並び */
-            flex-direction: row; /* 横方向に配置 */
-            background: linear-gradient(145deg, #faf8f0 0%, #f5f2e8 100%);
-            border-radius: 15px;
-            padding: 10px 0; /* 上下のパディングを最小限に */
-            direction: rtl; /* 右から左へのスクロール */
+        /* 段落スタイル */
+        .story-page p {
+            text-indent: 1em; /* 段落の字下げ */
+            margin: 0;
+            padding: 0;
         }
 
         /* スクロールバーのスタイリング */
         .story-container::-webkit-scrollbar {
-            height: 8px;
+            height: 10px;
         }
 
         .story-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
+            background: #e0d8c8;
             border-radius: 10px;
         }
 
         .story-container::-webkit-scrollbar-thumb {
-            background: #888;
+            background: #8B7355;
             border-radius: 10px;
         }
 
         .story-container::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-
-        /* 削除：不要になったクラス */
-        /* .story-page.active, .story-page.next-hidden, .story-page.prev-hidden は削除 */
-
-        /* ページコントロール関連のCSSを削除 */
-        /* .page-controls, .page-btn は削除 */
-
-        .page-indicator {
-            /* 削除：ページインジケーターも不要 */
+            background: #6B5344;
         }
 
         .feedback-section {
@@ -322,8 +315,8 @@
 
         .reset-section {
             text-align: center;
-            margin-top: 15px; /* 上の余白を削減 */
-            padding-top: 15px; /* 上のパディングを削減 */
+            margin-top: 15px;
+            padding-top: 15px;
             border-top: 1px solid #ccc;
         }
 
@@ -333,33 +326,26 @@
             .header p { font-size: 1rem; }
             .story-page { 
                 font-size: 16px; 
-                padding: 10px 15px 0px 15px;
-                line-height: 2.2; 
-                min-width: 350px;
-                height: calc(100% - 10px);
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-start;
+                padding: 20px 15px;
+                line-height: 2.0;
             }
             .book-container, .book-container.novel { 
-                height: 70vh; /* ビューポート高さの70%に拡大 */
+                height: 70vh;
                 margin-bottom: 10px;
             }
             .character-inputs { grid-template-columns: 1fr; }
             .story-container { 
-                height: calc(70vh - 40px); /* コンテナも連動して拡大 */
-                padding: 0;
+                height: 100%;
             }
             .reset-section {
                 margin-top: 10px;
                 padding-top: 10px;
             }
-            /* ヘッダー部分を少しコンパクトに */
             .header {
-                margin-bottom: 20px; /* 30px → 20px */
+                margin-bottom: 20px;
             }
             .step-indicator {
-                margin-bottom: 20px; /* 30px → 20px */
+                margin-bottom: 20px;
             }
         }
     </style>
@@ -449,7 +435,7 @@
             <div class="card">
                 <h2>📚 完成版小説（四千文字）</h2>
                 <div class="book-container novel">
-                    <div class="story-container" id="story-pages"></div>
+                    <div class="story-container" id="story-container"></div>
                 </div>
                 
                 <div class="reset-section">
@@ -462,7 +448,6 @@
     <script>
         let currentStep = 1;
         let storyData = {};
-        let storyPages = [];
 
         // ステップインジケーター更新
         function updateStepIndicator(step) {
@@ -495,59 +480,54 @@
             }, 5000);
         }
 
-        // テキストをページに分割（縦書き用に調整）
-        function splitTextIntoPages(text, charsPerPage = 550) {
-            const pages = [];
-            let currentPageText = '';
-            let charCount = 0;
+        // テキストを縦書き用に整形
+        function formatTextForVertical(text) {
+            // 余分な改行を処理
+            // 1. 連続する改行を段落区切りとして保持（2つの改行 → 段落）
+            // 2. 単独の改行は削除（文中の不要な改行）
+            // 3. 文末の句点の後の改行は保持
             
-            // 文章を文単位で分割
-            const sentences = text.split(/([。！？])/);
-            let tempSentence = '';
+            let formatted = text
+                // まず全角スペースと半角スペースの連続を整理
+                .replace(/[ 　]+/g, ' ')
+                // 3つ以上の改行を2つに
+                .replace(/\n{3,}/g, '\n\n')
+                // 句点・感嘆符・疑問符の後の改行は保持（段落区切り）
+                .replace(/([。！？])\n(?!\n)/g, '$1\n\n')
+                // それ以外の単独改行は削除（文中の不要な改行）
+                .replace(/([^。！？\n])\n(?!\n)/g, '$1')
+                // 段落区切り（2つの改行）を特殊マーカーに
+                .replace(/\n\n/g, '<<PARA>>')
+                // 残りの改行を削除
+                .replace(/\n/g, '')
+                // マーカーを改行に戻す
+                .replace(/<<PARA>>/g, '\n\n')
+                // 先頭・末尾の空白を削除
+                .trim();
             
-            for (let i = 0; i < sentences.length; i += 2) {
-                if (i + 1 < sentences.length) {
-                    tempSentence = sentences[i] + sentences[i + 1];
-                } else {
-                    tempSentence = sentences[i];
-                }
-                
-                if (charCount + tempSentence.length > charsPerPage && currentPageText.length > 0) {
-                    pages.push(currentPageText);
-                    currentPageText = tempSentence;
-                    charCount = tempSentence.length;
-                } else {
-                    currentPageText += tempSentence;
-                    charCount += tempSentence.length;
-                }
-            }
-            
-            if (currentPageText.trim()) {
-                pages.push(currentPageText);
-            }
-            
-            return pages;
+            return formatted;
         }
 
-        // ページ表示（スクロール用の連続表示）
-        function displayPages(pages, containerId) {
-            const container = document.getElementById(containerId);
+        // プロローグ表示
+        function displayProlog(text) {
+            const container = document.getElementById('prolog-content');
+            const formatted = formatTextForVertical(text);
+            container.textContent = formatted;
+        }
+
+        // 完成版小説表示
+        function displayFullStory(text) {
+            const container = document.getElementById('story-container');
+            const formatted = formatTextForVertical(text);
+            
+            // ページ要素を作成
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'story-page';
+            pageDiv.textContent = formatted;
+            
             container.innerHTML = '';
-            
-            // すべてのページを連続して表示
-            pages.forEach((pageText, index) => {
-                const pageDiv = document.createElement('div');
-                pageDiv.className = 'story-page';
-                pageDiv.textContent = pageText;
-                container.appendChild(pageDiv);
-            });
-            
-            storyPages = pages;
-            totalPages = pages.length;
+            container.appendChild(pageDiv);
         }
-
-        // ページめくり関数は削除（不要）
-        // nextPage(), prevPage(), updatePageIndicator(), updatePageButtons() を削除
 
         // プロローグ生成
         async function generateProlog() {
@@ -583,7 +563,14 @@
                 }
 
                 const result = await response.json();
-                document.getElementById('prolog-content').textContent = result.prolog;
+                const prologText = result.prolog;
+                
+                // プロローグテキストの存在確認
+                if (!prologText || typeof prologText !== 'string') {
+                    throw new Error('プロローグの生成に失敗しました。データが正しく取得できませんでした。');
+                }
+                
+                displayProlog(prologText);
                 
                 // UI更新
                 document.getElementById('input-form').style.display = 'none';
@@ -620,9 +607,12 @@
 
                 const result = await response.json();
                 
-                // テキストをページに分割
-                const pages = splitTextIntoPages(result.story);
-                displayPages(pages, 'story-pages');
+                // ストーリーテキストの存在確認
+                if (!result.story || typeof result.story !== 'string') {
+                    throw new Error('小説の生成に失敗しました。データが正しく取得できませんでした。');
+                }
+                
+                displayFullStory(result.story);
                 
                 // UI更新
                 document.getElementById('prolog-section').style.display = 'none';
@@ -638,11 +628,10 @@
             }
         }
 
-        // アプリリセット（ページ管理変数を削除）
+        // アプリリセット
         function resetApp() {
             currentStep = 1;
             storyData = {};
-            storyPages = [];
             
             // フォームクリア
             ['character1', 'character2', 'character3', 'setting', 'genre', 'feedback'].forEach(id => {
@@ -652,17 +641,21 @@
                 }
             });
             
+            // コンテンツクリア
+            document.getElementById('prolog-content').textContent = '';
+            document.getElementById('story-container').innerHTML = '';
+            
             // UI状態リセット
             document.getElementById('input-form').style.display = 'block';
             document.getElementById('prolog-section').classList.remove('show');
+            document.getElementById('prolog-section').style.display = '';
             document.getElementById('full-story-section').classList.remove('show');
             document.getElementById('error-display').style.display = 'none';
             updateStepIndicator(currentStep);
         }
 
-        // キーボードショートカット（スクロール用に簡素化）
+        // キーボードショートカット
         document.addEventListener('keydown', (event) => {
-            // ESCキーでエラーメッセージを閉じる
             if (event.key === 'Escape') {
                 const errorDiv = document.getElementById('error-display');
                 if (errorDiv.style.display === 'block') {
@@ -671,14 +664,11 @@
             }
         });
 
-        // タッチ操作は削除（スクロールに任せる）
-
         // ページ読み込み完了時の初期化
         document.addEventListener('DOMContentLoaded', () => {
             console.log('村Gemini春樹 - アプリケーション初期化完了');
             updateStepIndicator(currentStep);
             
-            // フォーカス管理
             const firstInput = document.getElementById('character1');
             if (firstInput) {
                 firstInput.focus();
@@ -691,7 +681,6 @@
             showError('アプリケーションエラーが発生しました。ページを再読み込みしてください。');
         });
 
-        // 未処理のPromise拒否をキャッチ
         window.addEventListener('unhandledrejection', (event) => {
             console.error('未処理の Promise 拒否:', event.reason);
             showError('通信エラーが発生しました。ネットワーク接続を確認してください。');
